@@ -1,0 +1,44 @@
+{
+  "name": "@enhanced-dom/intl",
+  "version": "0.0.1",
+  "description": "Utilities for managing translation keys inside the app",
+  "keywords": [],
+  "repository": "https://github.com/enhanced-dom/intl.git",
+  "license": "MIT",
+  "author": "CD9B4A105290E17E0948E021DF4105107C88693C59C0B891CCC08366C51AEA990902A6A156AC87D88A2FC41422A5E1C3C4071F251F19441C4516000EC25F87DF",
+  "main": "translations.js",
+  "scripts": {
+    "prebuild": "rimraf dist/*",
+    "build": "tsc -p ./tsconfig.json",
+    "postbuild": "copyfiles LICENSE.md README.md dist && @enhanced-dom-copy-packagejson",
+    "package": "cd dist && npm pack",
+    "postinstall": "@enhanced-dom-husky",
+    "lint": "eslint --fix --config eslint.config.js --ext ts src",
+    "test": "jest --config test/jest.config.js",
+    "pretest": "npm run build"
+  },
+  "dependencies": {
+    "lodash.isequal": "^4.5.0",
+    "require-from-string": "^2.0.2",
+    "schema-utils": "^4.0.0",
+    "@enhanced-dom/webpack": "^0.0.11"
+  },
+  "devDependencies": {
+    "@enhanced-dom/babel": "^0.0.5",
+    "@enhanced-dom/jest": "^0.0.1",
+    "@enhanced-dom/lint": "^0.0.9",
+    "@types/babel__helper-plugin-utils": "^7.10.0",
+    "@types/webpack": "^5.28.0",
+    "@types/lodash.isequal": "^4.5.6",
+    "@types/require-from-string": "^1.2.1",
+    "typescript": "^4.2.2"
+  },
+  "peerDependencies": {
+    "@babel/helper-plugin-utils": "^7.0.0",
+    "@babel/types": "^7.18.0"
+  },
+  "engines": {
+    "node": ">=14.17.0",
+    "npm": ">=8.6.0"
+  }
+}

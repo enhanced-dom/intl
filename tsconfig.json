@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "module": "UMD",
+    "lib": ["ES2018"],
+    "target": "es2018",
+    "baseUrl": "./",
+    "declaration": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "outDir": "dist",
+    "preserveConstEnums": true,
+    "sourceMap": true,
+    "allowJs": true,
+    "sourceRoot": "./",
+    "inlineSources": true
+  },
+  "include": ["src/**/*.ts"]
+}
