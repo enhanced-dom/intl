@@ -1,7 +1,9 @@
 import { compiler, loaders } from '@enhanced-dom/webpack'
 import { configFactory as babelConfigFactory } from '@enhanced-dom/babel'
-import type webpack from 'webpack'
+import { type Configuration } from 'webpack'
 import path from 'path'
+
+// @ts-ignore
 import { trackedFiles } from '../dist/constants'
 
 describe('webpack loader', () => {
@@ -9,7 +11,7 @@ describe('webpack loader', () => {
     'loads only files where filename matches the regex',
     (done) => {
       const testFolder = path.join(__dirname, 'loader_test')
-      const testCompilerConfig: webpack.Configuration = {
+      const testCompilerConfig: Configuration = {
         mode: 'development',
         target: 'node',
         entry: [path.join(testFolder, 'index.js')],
@@ -23,6 +25,7 @@ describe('webpack loader', () => {
           modules: ['./node_modules', path.resolve(__dirname, '../node_modules')],
           extensions: ['.ts', '.js'],
           alias: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             '@enhanced-dom/intl': path.resolve(__dirname, '../dist/translations.js'),
           },
         },

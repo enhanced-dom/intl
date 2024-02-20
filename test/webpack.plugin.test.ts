@@ -1,8 +1,11 @@
 import { compiler, loaders } from '@enhanced-dom/webpack'
 import { configFactory as babelConfigFactory } from '@enhanced-dom/babel'
-import type webpack from 'webpack'
+import { type Configuration } from 'webpack'
 import path from 'path'
+
+// @ts-ignore
 import { trackedFiles } from '../dist/constants'
+// @ts-ignore
 import IntlWebpackPlugin, { IntlResourcesRepository } from '../dist/webpack.plugin'
 
 describe.only('webpack plugin', () => {
@@ -10,7 +13,7 @@ describe.only('webpack plugin', () => {
     'extracts messages from tracked files',
     (done) => {
       const testFolder = path.join(__dirname, 'testFolder')
-      const testCompilerConfig: webpack.Configuration = {
+      const testCompilerConfig: Configuration = {
         mode: 'development',
         target: 'node',
         entry: [path.join(testFolder, 'index.js')],
@@ -24,6 +27,7 @@ describe.only('webpack plugin', () => {
           modules: ['./node_modules', path.resolve(__dirname, '../node_modules')],
           extensions: ['.ts', '.js'],
           alias: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             '@enhanced-dom/intl': path.resolve(__dirname, '../dist/translations.js'),
           },
         },

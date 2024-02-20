@@ -19,6 +19,7 @@ export default declare((api: BabelAPI) => {
   api.assertVersion(7)
   return {
     visitor: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       ImportDeclaration(path, state) {
         const { node } = path
         if (isEnhancedDomDefineMessagesImport(node)) {

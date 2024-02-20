@@ -44,10 +44,13 @@ class TranslationsRegistry {
 
 export const defineTranslations = <KeyType extends string>(translations: Record<KeyType, { key: string; default: string }>) => {
   defineTranslations.registry.add(translations)
-  return Object.keys(translations).reduce((acc, translationName) => {
-    acc[translationName] = makeTranslateable(translations[translationName].key)
-    return acc
-  }, {} as Record<KeyType, ITranslateable>)
+  return Object.keys(translations).reduce(
+    (acc, translationName) => {
+      acc[translationName] = makeTranslateable(translations[translationName].key)
+      return acc
+    },
+    {} as Record<KeyType, ITranslateable>,
+  )
 }
 
 defineTranslations.registry = new TranslationsRegistry()

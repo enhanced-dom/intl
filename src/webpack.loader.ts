@@ -1,5 +1,5 @@
 import { validate } from 'schema-utils'
-import { type JSONSchema4 } from 'json-schema'
+import { type JSONSchema4 } from 'json-schema' //eslint-disable-line import/no-unresolved
 
 import { trackedFiles } from './constants'
 

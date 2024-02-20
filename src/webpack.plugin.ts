@@ -1,6 +1,6 @@
 import fs from 'fs'
 import path from 'path'
-import webpack from 'webpack'
+import { type WebpackOptionsNormalized, type Compiler, type Configuration, type Stats, webpack } from 'webpack'
 import isEqualDeep from 'lodash.isequal'
 import requireFromString from 'require-from-string'
 import crypto from 'crypto'
@@ -279,8 +279,8 @@ class IntlWebpackPlugin {
     outputName: string,
     entry: string,
     originalContext: string,
-    originalConfig: webpack.WebpackOptionsNormalized,
-  ): webpack.Configuration => {
+    originalConfig: WebpackOptionsNormalized,
+  ): Configuration => {
     return {
       mode: 'development',
       target: 'node',
@@ -297,7 +297,7 @@ class IntlWebpackPlugin {
     }
   }
 
-  private _checkForErrors = (err: Error, stats: webpack.Stats) => {
+  private _checkForErrors = (err: Error, stats: Stats) => {
     if (err) {
       this._logger.error(err.toString())
       return true
@@ -322,7 +322,7 @@ class IntlWebpackPlugin {
   }
 
   private _compileIfNotCached = (
-    originalCompiler: webpack.Compiler,
+    originalCompiler: Compiler,
     onSuccess: (messages: Record<string, Record<string, string>>) => void,
     onError: (error: Error) => void,
   ) => {
@@ -357,7 +357,7 @@ class IntlWebpackPlugin {
   }
 
   private _compile = (
-    originalCompiler: webpack.Compiler,
+    originalCompiler: Compiler,
     onSuccess: (messages: Record<string, Record<string, string>>) => void,
     onError: (error: Error) => void,
   ) => {
@@ -410,7 +410,7 @@ class IntlWebpackPlugin {
     })
   }
 
-  private _extract = (originalCompiler: webpack.Compiler, finalCallback: () => void) => {
+  private _extract = (originalCompiler: Compiler, finalCallback: () => void) => {
     const onSuccess = (extractedTranslationsByFile: Record<string, Record<string, string>>) => {
       const resourceRepository = new IntlResourcesRepository(
         this._logger,
@@ -459,7 +459,7 @@ class IntlWebpackPlugin {
     this._compileIfNotCached(originalCompiler, onSuccess, onFailure)
   }
 
-  apply(compiler: webpack.Compiler) {
+  apply(compiler: Compiler) {
     compiler.hooks.afterEmit.tapAsync(PLUGIN_NAME, (compilation, cb) => {
       if (compilation.getLogger) {
         this._logger = compilation.getLogger(PLUGIN_NAME)
