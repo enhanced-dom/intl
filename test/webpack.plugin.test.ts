@@ -1,4 +1,4 @@
-import { compiler, loaders } from '@enhanced-dom/webpack'
+import webpackUtils from '@enhanced-dom/webpack'
 import { configFactory as babelConfigFactory } from '@enhanced-dom/babel'
 import { type Configuration } from 'webpack'
 import path from 'path'
@@ -36,7 +36,7 @@ describe.only('webpack plugin', () => {
             {
               test: /\.(t|j)s$/,
               exclude: /node_modules/,
-              use: loaders.babelConfigFactory({ babel: babelConfigFactory() }),
+              use: webpackUtils.loaders.babelConfigFactory({ babel: babelConfigFactory() }),
             },
           ],
         },
@@ -49,7 +49,7 @@ describe.only('webpack plugin', () => {
           }),
         ],
       }
-      const testCompiler = compiler.getInMemoryCompiler(testCompilerConfig)
+      const testCompiler = webpackUtils.compiler.getInMemoryCompiler(testCompilerConfig)
       const file1 = `
         import { defineTranslations } from '@enhanced-dom/intl';
         defineTranslations({
@@ -89,8 +89,8 @@ describe.only('webpack plugin', () => {
       trackedFiles.add(path.join(testFolder, 'file2.js'))
 
       testCompiler.run((error, stats) => {
-        if (error || stats.hasErrors()) {
-          const resolvedError = error || stats.toJson('errors-only').errors[0]
+        if (error || stats?.hasErrors()) {
+          const resolvedError = error || stats?.toJson('errors-only').errors?.[0]
 
           done(resolvedError)
         } else {

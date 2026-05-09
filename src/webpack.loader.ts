@@ -1,5 +1,5 @@
 import { validate } from 'schema-utils'
-import { type JSONSchema4 } from 'json-schema' //eslint-disable-line import/no-unresolved
+import { type JSONSchema4 } from 'json-schema'
 
 import { trackedFiles } from './constants'
 
@@ -23,6 +23,7 @@ const schema: JSONSchema4 = {
 const LOADER_NAME = '@enhanced-dom/intl'
 
 export default function loader(...args: any[]) {
+  // @ts-expect-error
   const options = this.getOptions()
 
   validate(schema, options, {
@@ -36,8 +37,11 @@ export default function loader(...args: any[]) {
     filepathFilter = (filepath: string) => filepathRegExp.test(filepath)
   }
 
+  // @ts-expect-error
   if (filepathFilter(this.resourcePath)) {
+    // @ts-expect-error
     trackedFiles.add(this.resourcePath)
   }
+  // @ts-expect-error
   this.callback(null, ...args)
 }

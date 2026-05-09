@@ -46,7 +46,7 @@ export const defineTranslations = <KeyType extends string>(translations: Record<
   defineTranslations.registry.add(translations)
   return Object.keys(translations).reduce(
     (acc, translationName) => {
-      acc[translationName] = makeTranslateable(translations[translationName].key)
+      acc[translationName as KeyType] = makeTranslateable(translations[translationName as KeyType].key)
       return acc
     },
     {} as Record<KeyType, ITranslateable>,

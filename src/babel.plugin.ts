@@ -21,6 +21,9 @@ export default declare((api: BabelAPI) => {
     visitor: {
       // eslint-disable-next-line @typescript-eslint/naming-convention
       ImportDeclaration(path, state) {
+        if (!state.file.opts.filename) {
+          return
+        }
         const { node } = path
         if (isEnhancedDomDefineMessagesImport(node)) {
           trackedFiles.add(state.file.opts.filename)

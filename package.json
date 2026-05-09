@@ -1,6 +1,6 @@
 {
   "name": "@enhanced-dom/intl",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Utilities for managing translation keys inside the app",
   "keywords": [],
   "repository": "https://github.com/enhanced-dom/intl.git",
@@ -20,16 +20,17 @@
   "dependencies": {
     "lodash.isequal": "^4.5.0",
     "require-from-string": "^2.0.2",
-    "schema-utils": "^4.2.0",
-    "@enhanced-dom/webpack": "^0.1.0"
+    "schema-utils": "^4.3.3",
+    "@enhanced-dom/webpack": "^0.3.0"
   },
   "devDependencies": {
-    "@enhanced-dom/babel": "^0.1.0",
-    "@enhanced-dom/jest": "^0.1.0",
-    "@enhanced-dom/lint": "^0.1.4",
-    "@types/jest": "^29.5.12",
+    "@enhanced-dom/babel": "^0.2.0",
+    "@enhanced-dom/jest": "^0.2.0",
+    "@enhanced-dom/lint": "^0.2.1",
+    "@types/jest": "^30.0.0",
     "@types/babel__helper-plugin-utils": "^7.10.3",
     "@types/webpack": "^5.28.5",
+    "@types/node": "^22.19.18",
     "@types/lodash.isequal": "^4.5.8",
     "@types/require-from-string": "^1.2.3"
   },
@@ -38,7 +39,7 @@
     "@babel/types": "^7.23.9"
   },
   "engines": {
-    "node": ">=18",
+    "node": ">=22",
     "npm": ">=10"
   }
 }

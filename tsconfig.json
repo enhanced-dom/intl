@@ -5,15 +5,18 @@
     "lib": ["ES2018"],
     "target": "es2018",
     "baseUrl": "./",
+    "ignoreDeprecations": "6.0",
     "declaration": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "rootDir": "./src",
     "outDir": "dist",
     "preserveConstEnums": true,
     "sourceMap": true,
     "allowJs": true,
     "sourceRoot": "./",
-    "inlineSources": true
+    "inlineSources": true,
+    "types": ["jest", "node"]
   },
   "include": ["src/**/*.ts"]
 }

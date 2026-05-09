@@ -1,4 +1,4 @@
-import { compiler, loaders } from '@enhanced-dom/webpack'
+import webpackUtils from '@enhanced-dom/webpack'
 import { configFactory as babelConfigFactory } from '@enhanced-dom/babel'
 import { type Configuration } from 'webpack'
 import path from 'path'
@@ -35,7 +35,7 @@ describe('webpack loader', () => {
               test: /\.(t|j)s$/,
               exclude: /node_modules/,
               use: [
-                ...loaders.babelConfigFactory({ babel: babelConfigFactory() }),
+                ...webpackUtils.loaders.babelConfigFactory({ babel: babelConfigFactory() }),
                 {
                   loader: path.resolve(__dirname, '../dist/webpack.loader.js'),
                   options: {
@@ -50,7 +50,7 @@ describe('webpack loader', () => {
           emitOnErrors: false,
         },
       }
-      const testCompiler = compiler.getInMemoryCompiler(testCompilerConfig)
+      const testCompiler = webpackUtils.compiler.getInMemoryCompiler(testCompilerConfig)
       const file1 = `
         import { defineTranslations } from '@enhanced-dom/intl';
         defineTranslations({
@@ -81,8 +81,8 @@ describe('webpack loader', () => {
       testCompiler.inputFileSystem.writeFileSync(path.join(testFolder, 'index.js'), indexJs)
 
       testCompiler.run((error, stats) => {
-        if (error || stats.hasErrors()) {
-          const resolvedError = error || stats.toJson('errors-only').errors[0]
+        if (error || stats?.hasErrors()) {
+          const resolvedError = error || stats?.toJson('errors-only').errors?.[0]
 
           done(resolvedError)
         } else {

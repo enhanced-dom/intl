@@ -4,7 +4,7 @@ import { type WebpackOptionsNormalized, type Compiler, type Configuration, type 
 import isEqualDeep from 'lodash.isequal'
 import requireFromString from 'require-from-string'
 import crypto from 'crypto'
-import { compiler as compilerUtils } from '@enhanced-dom/webpack'
+import webpackUtils from '@enhanced-dom/webpack'
 
 import { trackedFiles } from './constants'
 import { defineTranslations } from './translations'
@@ -19,16 +19,16 @@ interface ILogger {
 }
 
 interface IIntlResourcesRepositoryOptions {
-  translationFilenameTemplate?: ISingleArgumentTemplate
-  exportPath?: string
-  defaultLanguage?: string
+  translationFilenameTemplate: ISingleArgumentTemplate
+  exportPath: string
+  defaultLanguage: string
   checkOnly?: boolean
 }
 
 interface ISingleArgumentTemplate {
   matches: (str: string) => boolean
   expand: (value: string) => string
-  extract: (str: string) => string
+  extract: (str: string) => string | undefined
 }
 
 interface ISyncFileSystem {
@@ -53,14 +53,15 @@ export class IntlResourcesRepository {
     checkOnly: false,
     translationFilenameTemplate: {
       matches: (str: string) => /^intl\.([a-zA-Z]+(_[a-zA-Z]+){0,1})\.json$/.test(str),
-      extract: (str: string) => str.match(/^intl\.([a-zA-Z]+(_[a-zA-Z]+){0,1})\.json$/)[1],
+      extract: (str: string) => str.match(/^intl\.([a-zA-Z]+(_[a-zA-Z]+){0,1})\.json$/)?.[1],
       expand: (value: string) => `intl.${value}.json`,
     },
   }
   private _opts: IIntlResourcesRepositoryOptions
   private _logger: ILogger
   private _fileSystem: ISyncFileSystem
-  constructor(logger: ILogger, fileSystem: ISyncFileSystem = fs, opts: IIntlResourcesRepositoryOptions = {}) {
+  private _resources: Record<string, Record<string, string>> = {}
+  constructor(logger: ILogger, fileSystem: ISyncFileSystem = fs, opts: Partial<IIntlResourcesRepositoryOptions> = {}) {
     this._opts = { ...IntlResourcesRepository.defaultOpts, ...opts }
     this._opts.exportPath = path.resolve(process.cwd(), this._opts.exportPath)
     this._logger = logger
@@ -68,22 +69,18 @@ export class IntlResourcesRepository {
       throw 'incompatible file system'
     }
     this._fileSystem = fileSystem
-  }
-  private _resources = null
-  public get resources() {
-    if (!this._resources) {
-      const loadedResources = {}
-      const exportedMessagesPaths =
-        this._opts.exportPath && this._fileSystem.existsSync(this._opts.exportPath)
-          ? this._fileSystem.readdirSync(this._opts.exportPath).filter((f) => this._opts.translationFilenameTemplate.matches(f))
-          : []
+    const exportedMessagesPaths =
+      this._opts.exportPath && this._fileSystem.existsSync(this._opts.exportPath)
+        ? this._fileSystem.readdirSync(this._opts.exportPath).filter((f) => this._opts.translationFilenameTemplate.matches(f))
+        : []
 
-      exportedMessagesPaths.forEach((p) => {
-        loadedResources[this._opts.translationFilenameTemplate.extract(p)] = require(path.join(process.cwd(), this._opts.exportPath, p))
-      })
-      this._resources = loadedResources
-    }
-    return this._resources
+    exportedMessagesPaths.forEach((p) => {
+      const resourceName = this._opts.translationFilenameTemplate.extract(p)
+      if (resourceName) {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        this._resources[resourceName] = require(path.join(process.cwd(), this._opts.exportPath, p))
+      }
+    })
   }
 
   private _validate = (newResources: Record<string, Record<string, string>>): boolean => {
@@ -120,42 +117,42 @@ export class IntlResourcesRepository {
   }
 
   private _detectChanges = (masterTranslations: Record<string, string>) => {
-    const mergedTranslations = {}
-    const addedKeys = []
-    const renamedKeys = {}
+    const mergedTranslations: Record<string, Record<string, string>> = {}
+    const addedKeys: string[] = []
+    const renamedKeys: Record<string, string> = {}
     Object.keys(masterTranslations).forEach((key) => {
-      const mergedTranslation = {
+      const mergedTranslation: Record<string, string> = {
         default: masterTranslations[key],
       }
       let matchingKey = key
-      if (this.resources[this._opts.defaultLanguage]) {
-        if (!this.resources[this._opts.defaultLanguage][matchingKey]) {
-          const possibleCandidates = Object.keys(this.resources[this._opts.defaultLanguage]).filter(
+      if (this._resources[this._opts.defaultLanguage]) {
+        if (!this._resources[this._opts.defaultLanguage][matchingKey]) {
+          const possibleCandidates = Object.keys(this._resources[this._opts.defaultLanguage]).filter(
             (possibleKey) =>
-              this.resources[this._opts.defaultLanguage][possibleKey] === masterTranslations[matchingKey] &&
+              this._resources[this._opts.defaultLanguage][possibleKey] === masterTranslations[matchingKey] &&
               !Object.keys(masterTranslations).includes(possibleKey),
           )
           if (possibleCandidates.length === 1) {
             matchingKey = possibleCandidates[0]
             renamedKeys[matchingKey] = key
-            mergedTranslations[this._opts.defaultLanguage] = this.resources[this._opts.defaultLanguage][matchingKey]
-            delete this.resources[this._opts.defaultLanguage][matchingKey]
+            mergedTranslation[this._opts.defaultLanguage] = this._resources[this._opts.defaultLanguage][matchingKey]
+            delete this._resources[this._opts.defaultLanguage][matchingKey]
           } else {
             addedKeys.push(matchingKey)
             mergedTranslation[this._opts.defaultLanguage] = mergedTranslation.default
           }
         } else {
-          mergedTranslation[this._opts.defaultLanguage] = this.resources[this._opts.defaultLanguage][matchingKey]
-          delete this.resources[this._opts.defaultLanguage][matchingKey]
+          mergedTranslation[this._opts.defaultLanguage] = this._resources[this._opts.defaultLanguage][matchingKey]
+          delete this._resources[this._opts.defaultLanguage][matchingKey]
         }
 
-        Object.keys(this.resources)
+        Object.keys(this._resources)
           .filter((language) => language !== this._opts.defaultLanguage)
-          .filter((language) => !!this.resources[language][matchingKey])
-          .map((language) => [language, this.resources[language][matchingKey]])
+          .filter((language) => !!this._resources[language][matchingKey])
+          .map((language) => [language, this._resources[language][matchingKey]])
           .reduce((acc, [language, value]) => {
             acc[language] = value
-            delete this.resources[language][matchingKey]
+            delete this._resources[language][matchingKey]
             return acc
           }, mergedTranslation)
 
@@ -170,7 +167,7 @@ export class IntlResourcesRepository {
       mergedTranslations[key] = mergedTranslation
     })
 
-    const removedKeys = Object.keys(this.resources[this._opts.defaultLanguage] || {})
+    const removedKeys = Object.keys(this._resources[this._opts.defaultLanguage] || {})
 
     return {
       merged: mergedTranslations,
@@ -270,8 +267,8 @@ class IntlWebpackPlugin {
     warn: (message) => console.warn(`[${PLUGIN_NAME}]: ${message}`),
     error: (message) => console.error(`[${PLUGIN_NAME}]: ${message}`),
   }
-  private _repositoryOpts: IIntlResourcesRepositoryOptions
-  constructor(opts: IIntlResourcesRepositoryOptions = {}) {
+  private _repositoryOpts: Partial<IIntlResourcesRepositoryOptions>
+  constructor(opts: Partial<IIntlResourcesRepositoryOptions> = {}) {
     this._repositoryOpts = opts
   }
 
@@ -297,21 +294,25 @@ class IntlWebpackPlugin {
     }
   }
 
-  private _checkForErrors = (err: Error, stats: Stats) => {
+  private _checkForErrors = (err: Error | null, stats: Stats | undefined) => {
     if (err) {
       this._logger.error(err.toString())
       return true
     }
+    if (!stats) {
+      this._logger.warn('Compilation has no stats')
+      return false
+    }
 
     const jsonStats = stats.toJson()
-    if (jsonStats.errors.length > 0) {
+    if (jsonStats.errors?.length) {
       jsonStats.errors.forEach((e) => {
         this._logger.error(JSON.stringify(e))
       })
       return true
     }
 
-    if (jsonStats.warnings.length > 0) {
+    if (jsonStats.warnings?.length) {
       jsonStats.warnings.forEach((w) => {
         this._logger.warn(JSON.stringify(w))
       })
@@ -327,16 +328,18 @@ class IntlWebpackPlugin {
     onError: (error: Error) => void,
   ) => {
     const newCache: Record<string, string | null> = {}
-    const statErrors = []
+    const statErrors: string[] = []
     const trackedFilesArray = [...trackedFiles]
-    const readCallbackFactory = (filepath: string) => (err: Error, contents: string | Buffer) => {
+    const readCallbackFactory = (filepath: string) => (err: Error | null, contents: string | Buffer<ArrayBufferLike> | undefined) => {
       if (err) {
         newCache[filepath] = null
         statErrors.push(filepath)
       } else {
-        const hashSum = crypto.createHash('sha512')
-        hashSum.update(contents)
-        newCache[filepath] = hashSum.digest('hex')
+        if (contents) {
+          const hashSum = crypto.createHash('sha512')
+          hashSum.update(contents)
+          newCache[filepath] = hashSum.digest('hex')
+        }
       }
       if (trackedFilesArray.every((p) => newCache[p] !== undefined)) {
         if (isEqualDeep(this._cached, newCache)) {
@@ -352,7 +355,7 @@ class IntlWebpackPlugin {
       }
     }
     trackedFiles.forEach((filepath) => {
-      originalCompiler.inputFileSystem.readFile(filepath, readCallbackFactory(filepath))
+      originalCompiler.inputFileSystem?.readFile(filepath, readCallbackFactory(filepath))
     })
   }
 
@@ -386,7 +389,7 @@ class IntlWebpackPlugin {
     const webpackConfig = this._getConfig(outputName, entry, originalCompiler.context, originalCompiler.options)
     const newCompiler = webpack(webpackConfig)
     newCompiler.inputFileSystem = originalCompiler.inputFileSystem
-    const intlExtractionCompiler = compilerUtils.patchCompilerFileSystem(newCompiler, true)
+    const intlExtractionCompiler = webpackUtils.compiler.patchCompilerFileSystem(newCompiler, true)
     const rootExists = intlExtractionCompiler.inputFileSystem.existsSync(path.dirname(entry))
     if (!rootExists) {
       intlExtractionCompiler.inputFileSystem.mkdirpSync(path.dirname(entry))
@@ -403,7 +406,7 @@ class IntlWebpackPlugin {
         const source = intlExtractionCompiler.outputFileSystem.readFileSync(path.join(originalCompiler.context, './intl_temp', outputName))
         extractedTranslationsByFile = requireFromString(source.toString(), outputName)
       } catch (e) {
-        onError(e)
+        onError(e as Error)
         return
       }
       onSuccess(extractedTranslationsByFile)
