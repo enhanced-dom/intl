@@ -1,6 +1,6 @@
 {
   "name": "@enhanced-dom/intl",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Utilities for managing translation keys inside the app",
   "keywords": [],
   "repository": "https://github.com/enhanced-dom/intl.git",
@@ -13,20 +13,20 @@
     "postbuild": "copyfiles LICENSE.md README.md dist && @enhanced-dom-copy-packagejson",
     "package": "cd dist && npm pack",
     "postinstall": "@enhanced-dom-husky",
-    "lint": "eslint --fix --config eslint.config.js src test",
-    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --config test/jest.config.js",
+    "lint": "eslint --fix --config eslint.config.cjs src test",
+    "test": "node --experimental-vm-modules ./node_modules/.bin/jest --config test/jest.config.cjs",
     "pretest": "npm run build"
   },
   "dependencies": {
     "lodash.isequal": "^4.5.0",
     "require-from-string": "^2.0.2",
     "schema-utils": "^4.3.3",
-    "@enhanced-dom/webpack": "^0.3.0"
+    "@enhanced-dom/webpack": "~0.4.0"
   },
   "devDependencies": {
-    "@enhanced-dom/babel": "^0.2.0",
-    "@enhanced-dom/jest": "^0.2.0",
-    "@enhanced-dom/lint": "^0.2.1",
+    "@enhanced-dom/babel": "~0.2.1",
+    "@enhanced-dom/jest": "~0.2.1",
+    "@enhanced-dom/lint": "~0.3.0",
     "@types/jest": "^30.0.0",
     "@types/babel__helper-plugin-utils": "^7.10.3",
     "@types/webpack": "^5.28.5",
@@ -35,8 +35,8 @@
     "@types/require-from-string": "^1.2.3"
   },
   "peerDependencies": {
-    "@babel/helper-plugin-utils": "^7.22.5",
-    "@babel/types": "^7.23.9"
+    "@babel/helper-plugin-utils": "^7.29.7",
+    "@babel/types": "^7.29.7"
   },
   "engines": {
     "node": ">=22",
