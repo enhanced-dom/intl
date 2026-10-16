@@ -1,7 +1,7 @@
 import fs from 'fs'
 import path from 'path'
 import { type WebpackOptionsNormalized, type Compiler, type Configuration, type Stats, webpack } from 'webpack'
-import isEqualDeep from 'lodash.isequal'
+import { isEqual as isEqualDeep } from 'lodash-es'
 import requireFromString from 'require-from-string'
 import crypto from 'crypto'
 import webpackUtils from '@enhanced-dom/webpack'
@@ -86,7 +86,7 @@ export class IntlResourcesRepository {
   private _validate = (newResources: Record<string, Record<string, string>>): boolean => {
     const messageKeysMap: Record<string, string[]> = {}
     Object.keys(newResources).forEach((fileName) => {
-      const messagesInThatFile = newResources[fileName]
+      const messagesInThatFile = newResources[fileName]!
       Object.keys(messagesInThatFile).forEach((messageKey) => {
         if (!messageKeysMap[messageKey]) {
           messageKeysMap[messageKey] = []
@@ -94,10 +94,10 @@ export class IntlResourcesRepository {
         messageKeysMap[messageKey].push(fileName)
       })
     })
-    const duplicateMessageIds = Object.keys(messageKeysMap).filter((messageKey) => messageKeysMap[messageKey].length > 1)
+    const duplicateMessageIds = Object.keys(messageKeysMap).filter((messageKey) => messageKeysMap[messageKey]!.length > 1)
     if (duplicateMessageIds.length) {
       duplicateMessageIds.forEach((messageKey) =>
-        this._logger.error(`Message with key ${messageKey} appears in multiple files: ${messageKeysMap[messageKey].join(', ')}`),
+        this._logger.error(`Message with key ${messageKey} appears in multiple files: ${messageKeysMap[messageKey]!.join(', ')}`),
       )
       return false
     }
@@ -108,9 +108,9 @@ export class IntlResourcesRepository {
   private _serializeExtractedTranslations = (translationsByFile: Record<string, Record<string, string>>) => {
     const result = {} as Record<string, string>
     Object.keys(translationsByFile).forEach((fileName) => {
-      const translationsInFile = translationsByFile[fileName]
+      const translationsInFile = translationsByFile[fileName]!
       Object.keys(translationsInFile).forEach((translationKey) => {
-        result[translationKey] = translationsInFile[translationKey]
+        result[translationKey] = translationsInFile[translationKey]!
       })
     })
     return result
@@ -122,37 +122,38 @@ export class IntlResourcesRepository {
     const renamedKeys: Record<string, string> = {}
     Object.keys(masterTranslations).forEach((key) => {
       const mergedTranslation: Record<string, string> = {
-        default: masterTranslations[key],
+        default: masterTranslations[key]!,
       }
       let matchingKey = key
-      if (this._resources[this._opts.defaultLanguage]) {
-        if (!this._resources[this._opts.defaultLanguage][matchingKey]) {
-          const possibleCandidates = Object.keys(this._resources[this._opts.defaultLanguage]).filter(
+      const defaultLanguageResources = this._resources[this._opts.defaultLanguage]
+      if (defaultLanguageResources) {
+        if (!defaultLanguageResources[matchingKey]) {
+          const possibleCandidates = Object.keys(defaultLanguageResources).filter(
             (possibleKey) =>
-              this._resources[this._opts.defaultLanguage][possibleKey] === masterTranslations[matchingKey] &&
+              defaultLanguageResources[possibleKey] === masterTranslations[matchingKey] &&
               !Object.keys(masterTranslations).includes(possibleKey),
           )
           if (possibleCandidates.length === 1) {
-            matchingKey = possibleCandidates[0]
+            matchingKey = possibleCandidates[0]!
             renamedKeys[matchingKey] = key
-            mergedTranslation[this._opts.defaultLanguage] = this._resources[this._opts.defaultLanguage][matchingKey]
-            delete this._resources[this._opts.defaultLanguage][matchingKey]
+            mergedTranslation[this._opts.defaultLanguage] = defaultLanguageResources[matchingKey]!
+            delete defaultLanguageResources[matchingKey]
           } else {
             addedKeys.push(matchingKey)
-            mergedTranslation[this._opts.defaultLanguage] = mergedTranslation.default
+            mergedTranslation[this._opts.defaultLanguage] = mergedTranslation.default!
           }
         } else {
-          mergedTranslation[this._opts.defaultLanguage] = this._resources[this._opts.defaultLanguage][matchingKey]
-          delete this._resources[this._opts.defaultLanguage][matchingKey]
+          mergedTranslation[this._opts.defaultLanguage] = defaultLanguageResources[matchingKey]!
+          delete defaultLanguageResources[matchingKey]
         }
 
         Object.keys(this._resources)
           .filter((language) => language !== this._opts.defaultLanguage)
-          .filter((language) => !!this._resources[language][matchingKey])
-          .map((language) => [language, this._resources[language][matchingKey]])
+          .filter((language) => !!this._resources[language]?.[matchingKey])
+          .map((language): [string, string] => [language, this._resources[language]![matchingKey]!])
           .reduce((acc, [language, value]) => {
             acc[language] = value
-            delete this._resources[language][matchingKey]
+            delete this._resources[language]![matchingKey]
             return acc
           }, mergedTranslation)
 
@@ -160,7 +161,7 @@ export class IntlResourcesRepository {
           addedKeys.push(matchingKey)
         }
       } else {
-        mergedTranslation[this._opts.defaultLanguage] = masterTranslations[key]
+        mergedTranslation[this._opts.defaultLanguage] = masterTranslations[key]!
         addedKeys.push(key)
       }
 
@@ -225,11 +226,12 @@ export class IntlResourcesRepository {
     const translationsByLanguage: Record<string, Record<string, string>> = {}
     let exportsSaved = false
     Object.keys(translationsByKey).forEach((key) => {
-      Object.keys(translationsByKey[key])
+      const translationsForKey = translationsByKey[key]!
+      Object.keys(translationsForKey)
         .filter((language) => language !== 'default')
         .forEach((language) => {
           translationsByLanguage[language] = translationsByLanguage[language] ?? {}
-          translationsByLanguage[language][key] = translationsByKey[key][language]
+          translationsByLanguage[language][key] = translationsForKey[language]!
         })
     })
 
@@ -239,7 +241,7 @@ export class IntlResourcesRepository {
       }
       Object.keys(translationsByLanguage).forEach((language) => {
         const filePath = path.join(this._opts.exportPath, this._opts.translationFilenameTemplate.expand(language))
-        exportsSaved = exportsSaved || this._saveJsonExport(translationsByLanguage[language], filePath)
+        exportsSaved = exportsSaved || this._saveJsonExport(translationsByLanguage[language]!, filePath)
       })
       this._logger.info(`Saved exported translations to ${this._opts.exportPath}`)
     }
@@ -366,7 +368,9 @@ class IntlWebpackPlugin {
   ) => {
     this._logger.info('Starting intl extraction')
     const outputName = 'output.js'
-    const entry = path.join(originalCompiler.context, 'input.js')
+    // `.cjs` forces CommonJS parsing for this generated script's require()/module.exports regardless of
+    // the nearest package.json's "type" field (this package itself is "type": "module")
+    const entry = path.join(originalCompiler.context, 'input.cjs')
     const trackedFilesRelativeToContext = [...trackedFiles].map((trackedFile) =>
       trackedFile.replace(originalCompiler.context, '.').replace(new RegExp('\\' + path.sep, 'g'), '/'),
     )
